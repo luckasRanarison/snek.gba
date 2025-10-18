@@ -8,7 +8,7 @@ all: $(OUT_DIR)/rom.gba
 build:
 	@mkdir -p build
 
-build/rom.elf: asm/crt0.s $(wildcard src/*.c) $(wildcard assets/**) | $(OUT_DIR)
+build/rom.elf: ld/gba.ld asm/crt0.s $(wildcard src/*.c) $(wildcard assets/**) | $(OUT_DIR)
 	$(CC) $(C_FLAGS) asm/crt0.s src/*.c assets/*.c -o $(OUT_DIR)/rom.elf
 
 build/rom.gba: $(OUT_DIR)/rom.elf

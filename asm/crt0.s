@@ -43,12 +43,19 @@ _setup_sp:
         ldr        sp, =__sp_sys
 
 _setup_irq_handler:
-        ldr        r0, =irq_handler
+        ldr        r0, =_irq_handler
         mov        r1, #0x03000000
-        mov        r2, #0x00004000
+        mov        r2, #0x00008000
         add        r1, r1, r2
         sub        r1, #4
         str        r0, [r1]
+        b          _clear_bss
+
+_irq_handler:
+        push {r0-r3, lr}
+        bl irq_handler
+        pop {r0-r3, lr}
+        subs pc, lr, #4
 
 _clear_bss:
         mov        r0, #0
