@@ -6,10 +6,12 @@ MEMORY {
   EWRAM (rx) : ORIGIN = 0x02000000, LENGTH = 256K
 }
 
+__ewram_start = ORIGIN(EWRAM);
+__ewram_end   = ORIGIN(EWRAM) + LENGTH(EWRAM);
 __iwram_start = ORIGIN(IWRAM);
 __iwram_end   = ORIGIN(IWRAM) + LENGTH(IWRAM);
-__sp_irq      = __iwram_end - 64;
-__sp_sys      = __sp_irq - 256;
+__sp_irq      = __iwram_end - 160;
+__sp_sys      = __iwram_end - 256;
 
 SECTIONS {
   .text : 

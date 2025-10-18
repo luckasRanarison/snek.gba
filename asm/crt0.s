@@ -35,12 +35,20 @@ _start:
         .byte      0x3F            @ Header checksum (1 byte)
         .byte      0,0             @ Reserved (2 bytes)
 
-_init:
+_setup_sp:
         msr        cpsr, #0b0010010 @ IRQ mode
         ldr        sp, =__sp_irq
 
         msr        cpsr, #0b0011111 @ System mode
         ldr        sp, =__sp_sys
+
+_setup_irq_handler:
+        ldr        r0, =irq_handler
+        mov        r1, #0x03000000
+        mov        r2, #0x00004000
+        add        r1, r1, r2
+        sub        r1, #4
+        str        r0, [r1]
 
 _clear_bss:
         mov        r0, #0
@@ -66,5 +74,5 @@ _copy_data_inner:
         b          _copy_data_inner
 
 _main:
-        ldr        r0, =main + 1
+        ldr        r0, =main + 1 @ Switch to thumb mode
         bx         r0
