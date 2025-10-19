@@ -1,8 +1,7 @@
 BasedOnStyle: LLVM
-AllowShortFunctionsOnASingleLine: false
 IndentWidth: 4
 ColumnLimit: 0
 
+AllowShortFunctionsOnASingleLine: false
 AlignConsecutiveMacros: true
 AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true

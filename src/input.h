@@ -17,7 +17,7 @@ typedef enum {
 } InputKey;
 
 inline int is_key_pressed(InputKey key) {
-    return (*REG_KEYINPUT & key) != 0;
+    return (*REG_KEYINPUT & key) == 0;
 }
 
 #endif // !INPUT_H

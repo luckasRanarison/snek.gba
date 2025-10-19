@@ -52,10 +52,9 @@ _setup_irq_handler:
         b          _clear_bss
 
 _irq_handler:
-        push {r0-r3, lr}
-        bl irq_handler
-        pop {r0-r3, lr}
-        subs pc, lr, #4
+        ldr        r0, =irq_handler + 1
+        bx         r0
+        bx         lr
 
 _clear_bss:
         mov        r0, #0

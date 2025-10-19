@@ -8,50 +8,45 @@
 #include <stdint.h>
 
 typedef enum {
-    OBJ_SHAPE_SQUARE,
-    OBJ_SHAPE_HORIZONTAL_RECT,
-    OBJ_SHAPE_VERTICAL_RECT,
-} OBJShape;
+    SP_SHAPE_SQUARE,
+    SP_SHAPE_HORIZONTAL_RECT,
+    SP_SHAPE_VERTICAL_RECT,
+} SpriteShape;
 
 typedef enum {
-    OBJ_MODE_NORMAL,
-    OBJ_MODE_SEMI_TRANSPARENT,
-    OBJ_MODE_WINDOW,
-} OBJMode;
+    SP_MODE_NORMAL,
+    SP_MODE_SEMI_TRANSPARENT,
+    SP_MODE_WINDOW,
+} SpriteMode;
 
-#define SET_OAM_ATTR(id, attr, mask, value) \
-    SET_BITS(*((volatile uint16_t *)(ADDR_OAM) + attr + id * 4), mask, value)
+typedef struct {
+    uint16_t attr0;
+    uint16_t attr1;
+    uint16_t attr2;
+    uint16_t attr3;
+} Sprite;
 
-inline void obj_set_y(uint8_t id, uint8_t y) {
-    SET_OAM_ATTR(id, 0, 0xFF, y);
-}
+#define DEFINE_ACCESSORS(attr, field, type, mask, shift) \
+    inline void obj_set_##field(Sprite *sp, type val) {  \
+        SET_BITS(sp->attr, mask, val, shift);            \
+    }                                                    \
+    inline type obj_get_##field(Sprite *sp) {            \
+        return (type)GET_BITS(sp->attr, mask, shift);    \
+    }
 
-inline void obj_set_x(uint8_t id, uint16_t x) {
-    SET_OAM_ATTR(id, 1, 0x1FF, x);
-}
-
-inline void obj_set_color_mode(uint8_t id, ColorMode mode) {
-    SET_OAM_ATTR(id, 0, 0b11 << 12, mode);
-}
-
-inline void obj_set_shape(uint8_t id, OBJShape shape) {
-    SET_OAM_ATTR(id, 0, 0b11 << 14, shape);
-}
-
-inline void obj_set_size(uint8_t id, uint8_t size) {
-    SET_OAM_ATTR(id, 1, 0b11 << 14, size);
-}
-
-inline void obj_set_char(uint8_t id, uint16_t ch) {
-    SET_OAM_ATTR(id, 2, 0x3FF, ch);
-}
-
-inline void obj_set_prio(uint8_t id, uint8_t prio) {
-    SET_OAM_ATTR(id, 2, 0b11 << 10, prio);
-}
-
-inline void obj_set_pal(uint8_t id, uint8_t pal) {
-    SET_OAM_ATTR(id, 2, 0b1111 << 12, pal);
-}
+DEFINE_ACCESSORS(attr0, y, uint8_t, 0xFF, 0)
+DEFINE_ACCESSORS(attr0, transform, uint8_t, 0b1, 8)
+DEFINE_ACCESSORS(attr0, dbl_size, uint8_t, 0b1, 9)
+DEFINE_ACCESSORS(attr0, mode, SpriteMode, 0b11, 10)
+DEFINE_ACCESSORS(attr0, mosaic, uint8_t, 0b11, 12)
+DEFINE_ACCESSORS(attr0, color_mode, ColorMode, 0b11, 13)
+DEFINE_ACCESSORS(attr0, shape, SpriteShape, 0b11, 14)
+DEFINE_ACCESSORS(attr1, x, uint16_t, 0x1FF, 0)
+DEFINE_ACCESSORS(attr1, h_flip, uint8_t, 0b1, 12)
+DEFINE_ACCESSORS(attr1, v_flip, uint8_t, 0b1, 13)
+DEFINE_ACCESSORS(attr1, size, uint8_t, 0b11, 14)
+DEFINE_ACCESSORS(attr2, tile, uint8_t, 0x3FF, 0)
+DEFINE_ACCESSORS(attr2, priority, uint8_t, 0b11, 10)
+DEFINE_ACCESSORS(attr2, palette, uint8_t, 0b1111, 12)
 
 #endif // !OBJECTS_H

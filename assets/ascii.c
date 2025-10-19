@@ -4,10 +4,11 @@
 //======================================================================
 //
 //	ascii, 128x64@4, 
+//	+ palette 2 entries, not compressed
 //	+ 128 tiles not compressed
-//	Total size: 4096 = 4096
+//	Total size: 4 + 4096 = 4100
 //
-//	Time-stamp: 2025-10-18, 16:58:40
+//	Time-stamp: 2025-10-19, 15:52:33
 //	Exported by Cearn's GBA Image Transmogrifier, v0.9.2
 //	( http://www.coranac.com/projects/#grit )
 //
@@ -160,25 +161,9 @@ const unsigned int asciiTiles[1024] __attribute__((aligned(4))) __attribute__((v
 	0x01111110,0x01111110,0x01111110,0x01111110,0x01111110,0x01111110,0x00000000,0x00000000,
 };
 
-//}}BLOCK(ascii)
-
-//{{BLOCK(Shared)
-
-//======================================================================
-//
-//	Shared, 16x16@4, 
-//	+ palette 2 entries, not compressed
-//	Total size: 4 = 4
-//
-//	Time-stamp: 2025-10-18, 16:58:40
-//	Exported by Cearn's GBA Image Transmogrifier, v0.9.2
-//	( http://www.coranac.com/projects/#grit )
-//
-//======================================================================
-
-const unsigned short SharedPal[2] __attribute__((aligned(4))) __attribute__((visibility("hidden")))=
+const unsigned short asciiPal[2] __attribute__((aligned(4))) __attribute__((visibility("hidden")))=
 {
 	0x0000,0x7FFF,
 };
 
-//}}BLOCK(Shared)
+//}}BLOCK(ascii)
