@@ -6,7 +6,6 @@
 #include "types.h"
 
 #include <stdint.h>
-#include <sys/types.h>
 
 int cursor_x = 1;
 int cursor_y = 1;
@@ -30,17 +29,13 @@ void print_str(char *str, volatile uint16_t *block) {
     }
 }
 
-void irq_handler(void) __attribute__((target("arm")));
-
 void irq_handler() {
-    *REG_IE &= ~IE_DMA0;
+    *REG_IF = IRQ_DMA3;
 }
-
-#include <stdint.h>
 
 int main() {
     *REG_IME = 1;
-    *REG_IE |= IE_DMA0;
+    *REG_IE  = IRQ_DMA3;
 
     *REG_DISPCNT = DISP_BG_MODE(0) |
                    DISP_BG0_ENABLE |
@@ -65,21 +60,22 @@ int main() {
                          DMA_START_TIMING(DMA_START_IMMEDIATE) |
                          DMA_TRANSFER_TYPE(DMA_TRANSFER32);
 
-    for (int i = 0; i < asciiTilesLen / 4; i++) {
-        bg_char_block[i] = asciiTiles[i];
-    }
+    start_dma3((uintptr_t)asciiTiles, 0x06000000, asciiTilesLen / 4, dma_flags);
 
-    // clear bg
-    volatile uint16_t *bf = BG_SCREEN_BLOCK(8);
+    // this is unreachable
 
-    for (int y = 0; y < 20; y++) {
-        for (int x = 0; x < 30; x++) {
-            print_char(' ', x, y, bf);
+    while (1) {
+        // if ((*REG_DMA3CNT_H & DMA_ENABLE) == 0) {
+        // clear bg
+        volatile uint16_t *bf = BG_SCREEN_BLOCK(8);
+
+        for (int y = 0; y < 20; y++) {
+            for (int x = 0; x < 30; x++) {
+                print_char(' ', x, y, bf);
+            }
         }
+
+        print_str("DMA complete!\n\n", bf);
+        // }
     }
-
-    print_str("Hello World!\n\n", bf);
-
-    while (1)
-        ;
 }
