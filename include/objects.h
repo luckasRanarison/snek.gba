@@ -2,7 +2,6 @@
 #define OBJECTS_H
 
 #include "bitflags.h"
-#include "constants.h"
 #include "types.h"
 
 #include <stdint.h>

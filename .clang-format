@@ -4,4 +4,3 @@ ColumnLimit: 0
 
 AllowShortFunctionsOnASingleLine: false
 AlignConsecutiveMacros: true
-AlignConsecutiveAssignments: true

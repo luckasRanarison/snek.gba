@@ -1,18 +1,25 @@
 CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
-C_FLAGS = -mcpu=arm7tdmi -mthumb -nostdlib -O2 -T ld/gba.ld
+
+CFLAGS = -mcpu=arm7tdmi -mthumb -O2 -Iinclude
+LDFLAGS = -nostdlib -T ld/gba.ld
+
+SRC_DIRS = src assets
+SRCS = $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
+DEPS = asm/crt0.s $(wildcard include/*.h) $(SRCS)
+
 OUT_DIR = build
 
 all: $(OUT_DIR)/rom.gba
 
-build:
-	@mkdir -p build
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
 
-build/rom.elf: ld/gba.ld asm/crt0.s $(wildcard src/**) $(wildcard assets/**) | $(OUT_DIR)
-	$(CC) $(C_FLAGS) asm/crt0.s src/*.c assets/*.c -o $(OUT_DIR)/rom.elf
+$(OUT_DIR)/rom.elf: $(DEPS) | $(OUT_DIR)
+	$(CC) $(CFLAGS) asm/crt0.s $(SRCS) $(LDFLAGS) -o $@
 
-build/rom.gba: $(OUT_DIR)/rom.elf
-	$(OBJCOPY) -O binary $(OUT_DIR)/rom.elf $(OUT_DIR)/rom.gba
+$(OUT_DIR)/rom.gba: $(OUT_DIR)/rom.elf
+	$(OBJCOPY) -O binary $< $@
 
 clean:
-	@rm -rf $(OUT_DIR)
+	rm -rf $(OUT_DIR)

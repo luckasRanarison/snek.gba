@@ -12,9 +12,9 @@
 
 #include <stdint.h>
 
-#define TILE_SIZE 8
-
-Sprite global_sprites[MAX_SPRITE];
+#define TILE_SIZE         8
+#define INITIAL_LENGTH    3
+#define INITIAL_DIRECTION RIGHT
 
 typedef enum {
     UP,
@@ -23,29 +23,52 @@ typedef enum {
     RIGHT,
 } Direction;
 
-void init_snake() {
-    uint8_t inital_x[]     = {10, 9, 8};
+typedef struct {
+    uint8_t snake_length;
+    Direction direction;
+    int stepper;
+    Sprite sprites[MAX_SPRITE];
+} GameState;
+
+void init_game(GameState *state) {
+    uint8_t inital_x[] = {10, 9, 8};
     uint8_t inital_tiles[] = {1, 0, 0};
 
     for (int i = 0; i < 3; i++) {
-        obj_set_x(&global_sprites[i], inital_x[i] * TILE_SIZE);
-        obj_set_y(&global_sprites[i], 10 * TILE_SIZE);
-        obj_set_tile(&global_sprites[i], inital_tiles[i]);
-        obj_set_priority(&global_sprites[i], 0);
+        obj_set_x(&state->sprites[i], inital_x[i] * TILE_SIZE);
+        obj_set_y(&state->sprites[i], 10 * TILE_SIZE);
+        obj_set_tile(&state->sprites[i], inital_tiles[i]);
+        obj_set_priority(&state->sprites[i], 0);
     }
 
     for (int i = 3; i < MAX_SPRITE; i++) {
-        obj_set_priority(&global_sprites[i], 3);
+        obj_set_priority(&state->sprites[i], 3);
+    }
+
+    state->stepper = 0;
+    state->direction = INITIAL_DIRECTION;
+    state->snake_length = INITIAL_LENGTH;
+}
+
+void handle_input(GameState *state) {
+    if (is_key_pressed(KEY_RIGHT) && state->direction != LEFT) {
+        state->direction = RIGHT;
+    } else if (is_key_pressed(KEY_LEFT) && state->direction != RIGHT) {
+        state->direction = LEFT;
+    } else if (is_key_pressed(KEY_UP) && state->direction != DOWN) {
+        state->direction = UP;
+    } else if (is_key_pressed(KEY_DOWN) && state->direction != UP) {
+        state->direction = DOWN;
     }
 }
 
-void move_snake(Direction direction, uint8_t length) {
-    Sprite *head = &global_sprites[0];
+void move_snake(GameState *state) {
+    Sprite *head = &state->sprites[0];
 
-    uint8_t new_x  = obj_get_x(head);
+    uint8_t new_x = obj_get_x(head);
     uint16_t new_y = obj_get_y(head);
 
-    switch (direction) {
+    switch (state->direction) {
     case UP:
         obj_set_h_flip(head, 0);
         new_y -= TILE_SIZE;
@@ -64,13 +87,23 @@ void move_snake(Direction direction, uint8_t length) {
         break;
     }
 
-    for (int i = length - 1; i > 0; i--) {
-        obj_set_x(&global_sprites[i], obj_get_x(&global_sprites[i - 1]));
-        obj_set_y(&global_sprites[i], obj_get_y(&global_sprites[i - 1]));
+    for (int i = state->snake_length - 1; i > 0; i--) {
+        obj_set_x(&state->sprites[i], obj_get_x(&state->sprites[i - 1]));
+        obj_set_y(&state->sprites[i], obj_get_y(&state->sprites[i - 1]));
     }
 
     obj_set_x(head, new_x);
     obj_set_y(head, new_y);
+}
+
+void update_sprite(GameState *state) {
+    uint16_t dma_flags = DMA_ENABLE |
+                         DMA_START_TIMING(DMA_START_IMMEDIATE) |
+                         DMA_TRANSFER_TYPE(DMA_TRANSFER16);
+
+    uintptr_t oam = (uintptr_t)ADDR_OAM;
+
+    start_dma3((uintptr_t)state->sprites, oam, MAX_SPRITE * OAM_ATTR_COUNT, dma_flags);
 }
 
 void irq_handler() {
@@ -78,6 +111,8 @@ void irq_handler() {
 }
 
 int main() {
+    GameState state;
+
     // *REG_IME = 1;
     // *REG_IE  = IRQ_DMA3;
 
@@ -124,46 +159,27 @@ int main() {
         }
     }
 
-    init_snake();
-
-    uint8_t snake_length = 3;
-    Direction direction  = RIGHT;
-
-    int stepper = 0;
+    init_game(&state);
 
     while (1) {
         // game logic
         while ((*REG_DISPSTAT & DISP_VBLK_STAT))
             ;
 
-        if (is_key_pressed(KEY_RIGHT) && direction != LEFT) {
-            direction = RIGHT;
-        } else if (is_key_pressed(KEY_LEFT) && direction != RIGHT) {
-            direction = LEFT;
-        } else if (is_key_pressed(KEY_UP) && direction != DOWN) {
-            direction = UP;
-        } else if (is_key_pressed(KEY_DOWN) && direction != UP) {
-            direction = DOWN;
-        }
+        handle_input(&state);
 
-        if (stepper == 10) {
-            move_snake(direction, snake_length);
-            stepper = 0;
+        if (state.stepper == 10) {
+            move_snake(&state);
+            state.stepper = 0;
         } else {
-            stepper += 1;
+            state.stepper += 1;
         }
 
         // rendering logic
         while (!(*REG_DISPSTAT & DISP_VBLK_STAT)) // wait for vblank
             ;
 
-        uint16_t dma_flags = DMA_ENABLE |
-                             DMA_START_TIMING(DMA_START_IMMEDIATE) |
-                             DMA_TRANSFER_TYPE(DMA_TRANSFER16);
-
-        uintptr_t oam = (uintptr_t)ADDR_OAM;
-
-        start_dma3((uintptr_t)global_sprites, oam, MAX_SPRITE * OAM_ATTR_COUNT, dma_flags);
+        update_sprite(&state);
     }
 }
 
